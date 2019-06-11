@@ -1,4 +1,10 @@
+#include <stdio.h>
 #include "linkto.h"
+
+int hello(void) {
+    printf("Hello world!\n");
+    return 0;
+}
 
 void negative_prob_multiply_matrix_vector(float* matrix, float* in_vector, float* out_vector, unsigned int outerdim, unsigned int innerdim) {
     for (int i=0; i < outerdim; i++) {

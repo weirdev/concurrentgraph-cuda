@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <cuda.h>
+#include "cutest.h"
 
 int hello(void) {
     printf("Hello world!\n");
