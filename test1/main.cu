@@ -1,17 +1,7 @@
 #include <stdio.h>
 #include <cuda.h>
 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void __declspec(dllexport) negative_prob_multiply_matrix_vector(float* matrix, float* in_vector, float* out_vector, uint outerdim, uint innerdim);
-
-#ifdef __cplusplus
-}
-#endif
-
+extern "C" __declspec(dllexport) void negative_prob_multiply_matrix_vector(float* matrix, float* in_vector, float* out_vector, uint outerdim, uint innerdim);
 
 int main(void) {
     printf("Hello world!\n");
