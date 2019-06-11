@@ -1,9 +1,7 @@
 #include <stdio.h>
 #include <cuda.h>
 
-extern "C" __declspec(dllexport) void negative_prob_multiply_matrix_vector(float* matrix, float* in_vector, float* out_vector, uint outerdim, uint innerdim);
-
-int main(void) {
+int hello(void) {
     printf("Hello world!\n");
     return 0;
 }
