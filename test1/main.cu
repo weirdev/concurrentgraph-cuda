@@ -18,16 +18,6 @@ int main(void) {
     return 0;
 }
 
-void multiply_matrix_vector(float* matrix, float* in_vector, float* out_vector, int* outerdim, int* innerdim) {
-    for (int i=0; i < outerdim; i++) {
-        float sum = 0;
-        for (int j=0; j < innerdim; j++) {
-            sum += matrix[i*innerdim + j] * in_vector[j];
-        }
-        out_vector[i] = sum;
-    }
-}
-
 void negative_prob_multiply_matrix_vector(float* matrix, float* in_vector, float* out_vector, uint outerdim, uint innerdim) {
     for (int i=0; i < outerdim; i++) {
         float prob = 1;
