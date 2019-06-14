@@ -1,4 +1,4 @@
-Full compilation of shared library, use this:
+4Full compilation of shared library, use this:
     nvcc --shared --compiler-options -fPIC concurrentgraph_cuda.cu npmmv_kernel.cu -o libconcurrentgraph_cuda.so
 
 Compile .cu file to shared library:
@@ -18,4 +18,3 @@ Staticly link C file with cuda file (nvcc only needed to compile .cu files, gcc 
 To static lib:
 
     $ ar rcs concurrentgraph-cuda.a concurrentgraph-cuda.o
-
