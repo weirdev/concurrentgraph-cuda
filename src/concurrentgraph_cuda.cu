@@ -142,7 +142,7 @@ void npmmv_dense_gpu_free(struct NpmmvDenseGpuAllocations gpu_allocations) {
     free_gpu_float_array(gpu_allocations.out_vector);
 }
 
-void npmmv_dense_gpu_set_matrix(float* matrix_cpu, struct GpuFloatArray matrix_gpu, uint outerdim, uint innerdim) {
+void npmmv_gpu_set_dense_matrix(float* matrix_cpu, struct GpuFloatArray matrix_gpu, uint outerdim, uint innerdim) {
     npmmv_gpu_set_float_array(matrix_cpu, outerdim*innerdim, matrix_gpu);
 }
 
