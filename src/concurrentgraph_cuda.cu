@@ -4,6 +4,7 @@
 #include <cuda_runtime.h>
 
 #include "dev_array.h"
+#include "assert.h"
 #include "concurrentgraph_cuda.h"
 #include "npmmv_dense_kernel.h"
 #include "npmmv_csr_kernel.h"
@@ -95,11 +96,7 @@ void npmmv_gpu_get_float_array(struct GpuFloatArray src, float* dst, uint size) 
     if (src.end - src.start < size) {
         throw std::out_of_range("Attempted to copy more memory to host than allocated on the device");
     }
-    cudaError_t result = cudaMemcpy(dst, src.start, size * sizeof(float), cudaMemcpyDeviceToHost);
-    if (result != cudaSuccess)
-    {
-        throw std::runtime_error("failed to copy to host memory");
-    }
+    gpuErrchk(cudaMemcpy(dst, src.start, size * sizeof(float), cudaMemcpyDeviceToHost));
     cudaDeviceSynchronize();
 }
 
