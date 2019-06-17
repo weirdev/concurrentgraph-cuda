@@ -19,8 +19,6 @@ extern "C" {
     
     void npmmv_gpu_set_float_array(float* src, uint size, struct GpuFloatArray dst);
     void npmmv_gpu_get_float_array(struct GpuFloatArray src, float* dst, uint size);
-    void npmmv_gpu_set_uint_array(uint* src, uint size, struct GpuUIntArray dst);
-    void npmmv_gpu_get_uint_array(struct GpuUIntArray src, uint* dst, uint size);
 
     struct NpmmvDenseGpuAllocations {
         struct GpuFloatArray matrix;
