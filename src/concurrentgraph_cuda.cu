@@ -158,7 +158,7 @@ void npmmv_dense_gpu_compute(struct NpmmvDenseGpuAllocations gpu_allocations, ui
 }
 
 struct NpmmvCsrGpuAllocations npmmv_csr_gpu_allocate(uint outerdim, uint innerdim, uint values) {
-    struct GpuUIntArray mat_cum_row_indexes = allocate_gpu_uint_array(outerdim);
+    struct GpuUIntArray mat_cum_row_indexes = allocate_gpu_uint_array(outerdim + 1);
     struct GpuUIntArray mat_column_indexes = allocate_gpu_uint_array(values);
     struct GpuFloatArray mat_values = allocate_gpu_float_array(values);
     struct GpuFloatArray in_vector_mem = allocate_gpu_float_array(innerdim);

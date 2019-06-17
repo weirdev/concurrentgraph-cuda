@@ -4,9 +4,9 @@
 #include "npmmv_csr_kernel.h"
 
 __global__ void negative_prob_multiply_csr_matrix_vector_kernel(unsigned int* cum_row_indexes, unsigned int* column_indexes, 
-                                                float* matrix_data, float* in_vector, float* out_vector, int outerdim) {
+                                                float* matrix_data, float* in_vector, float* out_vector, unsigned int outerdim) {
 
-    int row = blockDim.x * blockIdx.x + threadIdx.x;
+    unsigned int row = blockDim.x * blockIdx.x + threadIdx.x;
 
     if (row < outerdim) {
         float prob = 1.0;
@@ -22,7 +22,7 @@ __global__ void negative_prob_multiply_csr_matrix_vector_kernel(unsigned int* cu
 }
 
 void internal_negative_prob_multiply_csr_matrix_vector_gpu(unsigned int* cum_row_indexes, unsigned int* column_indexes, 
-                                            float* matrix_data, float* in_vector, float* out_vector, int outerdim) {
+                                            float* matrix_data, float* in_vector, float* out_vector, unsigned int outerdim) {
     // declare the number of blocks per grid and the number of threads per block
     // use 1 to 512 threads per block
     dim3 threadsPerBlock(outerdim);
