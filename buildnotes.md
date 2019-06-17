@@ -1,5 +1,6 @@
-4Full compilation of shared library, use this:
-    nvcc --shared --compiler-options -fPIC concurrentgraph_cuda.cu npmmv_kernel.cu -o libconcurrentgraph_cuda.so
+For Full compilation of shared library, use this:
+
+    nvcc --shared --compiler-options -fPIC concurrentgraph_cuda.cu npmmv_dense_kernel.cu npmmv_csr_kernel.cu -o libconcurrentgraph_cuda.so
 
 Compile .cu file to shared library:
 
