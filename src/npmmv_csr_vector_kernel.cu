@@ -59,6 +59,7 @@ void internal_spmv_csr_veck_gpu(unsigned int computation_restriction_factor,
         blocksPerGrid.x = ceil(double(outerdim*32*computation_restriction_factor)/double(threadsPerBlock.x));
     }
 
-    spmv_csr_vector_kernel<<<blocksPerGrid,threadsPerBlock>>>(cum_row_indexes, column_indexes, matrix_data, 
+    spmv_csr_vector_kernel<<<blocksPerGrid,threadsPerBlock>>>(computation_restriction_factor, 
+        cum_row_indexes, column_indexes, matrix_data, 
         in_vector, out_vector, outerdim);
 }
