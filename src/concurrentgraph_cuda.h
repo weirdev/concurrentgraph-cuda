@@ -48,7 +48,7 @@ extern "C" {
     struct NpmmvCsrGpuAllocations npmmv_csr_gpu_allocate(uint outerdim, uint innerdim, uint values);
     void npmmv_csr_gpu_free(struct NpmmvCsrGpuAllocations gpu_allocations);
     void npmmv_gpu_set_csr_matrix(struct CsrMatrixPtrs matrix_cpu, struct NpmmvCsrGpuAllocations gpu_allocations, uint outerdim, uint values);
-    void npmmv_csr_gpu_compute(struct NpmmvCsrGpuAllocations gpu_allocations, uint outerdim);
+    void npmmv_csr_gpu_compute(struct NpmmvCsrGpuAllocations gpu_allocations, uint outerdim, uint computation_restriction_factor);
 
 #ifdef __cplusplus
 }

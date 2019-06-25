@@ -8,8 +8,11 @@
 #include "concurrentgraph_cuda.h"
 #include "npmmv_dense_kernel.h"
 #include "npmmv_csr_kernel.h"
+#include "npmmv_csr_vector_kernel.h"
 
-void negative_prob_multiply_dense_matrix_vector_cpu(int iters, float* matrix, float* in_vector, float* out_vector, uint outerdim, uint innerdim) {
+
+void negative_prob_multiply_dense_matrix_vector_cpu(int iters, float* matrix, float* in_vector, 
+                                                    float* out_vector, uint outerdim, uint innerdim) {
     for (int t=0; t<iters; t++) {
         for (int i=0; i < outerdim; i++) {
             float prob = 1;
@@ -21,7 +24,8 @@ void negative_prob_multiply_dense_matrix_vector_cpu(int iters, float* matrix, fl
     }
 }
 
-void negative_prob_multiply_dense_matrix_vector_gpu(int iters, float* matrix, float* in_vector, float* out_vector, uint outerdim, uint innerdim) {
+void negative_prob_multiply_dense_matrix_vector_gpu(int iters, float* matrix, float* in_vector, 
+                                                    float* out_vector, uint outerdim, uint innerdim) {
     // Allocate memory on the device
     dev_array<float> d_matrix(outerdim*innerdim);
     dev_array<float> d_in_vector(innerdim);
@@ -31,7 +35,8 @@ void negative_prob_multiply_dense_matrix_vector_gpu(int iters, float* matrix, fl
     d_in_vector.set(in_vector, innerdim);
 
     for (int t=0; t<iters; t++) {
-        internal_negative_prob_multiply_dense_matrix_vector_gpu(d_matrix.getData(), d_in_vector.getData(), d_out_vector.getData(), innerdim, outerdim);
+        internal_negative_prob_multiply_dense_matrix_vector_gpu(d_matrix.getData(), d_in_vector.getData(), 
+            d_out_vector.getData(), innerdim, outerdim);
         cudaDeviceSynchronize();
     }
 
@@ -96,6 +101,7 @@ void npmmv_gpu_get_float_array(struct GpuFloatArray src, float* dst, uint size) 
     if (src.end - src.start < size) {
         throw std::out_of_range("Attempted to copy more memory to host than allocated on the device");
     }
+    
     gpuErrchk(cudaMemcpy(dst, src.start, size * sizeof(float), cudaMemcpyDeviceToHost));
     cudaDeviceSynchronize();
 }
@@ -150,7 +156,8 @@ void npmmv_dense_gpu_compute(struct NpmmvDenseGpuAllocations gpu_allocations, ui
         
         throw std::out_of_range("Attempted to compute over more data than allocated on the device");
     }
-    internal_negative_prob_multiply_dense_matrix_vector_gpu(gpu_allocations.matrix.start, gpu_allocations.in_vector.start, gpu_allocations.out_vector.start, innerdim, outerdim);
+    internal_negative_prob_multiply_dense_matrix_vector_gpu(gpu_allocations.matrix.start, 
+        gpu_allocations.in_vector.start, gpu_allocations.out_vector.start, innerdim, outerdim);
     cudaDeviceSynchronize();
 }
 
@@ -161,7 +168,8 @@ struct NpmmvCsrGpuAllocations npmmv_csr_gpu_allocate(uint outerdim, uint innerdi
     struct GpuFloatArray in_vector_mem = allocate_gpu_float_array(innerdim);
     struct GpuFloatArray out_vector_mem = allocate_gpu_float_array(outerdim);
 
-    struct NpmmvCsrGpuAllocations gpu_allocations = {mat_cum_row_indexes, mat_column_indexes, mat_values, in_vector_mem, out_vector_mem};
+    struct NpmmvCsrGpuAllocations gpu_allocations = {mat_cum_row_indexes, mat_column_indexes, mat_values, 
+        in_vector_mem, out_vector_mem};
     return gpu_allocations;
 }
 
@@ -173,14 +181,18 @@ void npmmv_csr_gpu_free(struct NpmmvCsrGpuAllocations gpu_allocations) {
     free_gpu_float_array(gpu_allocations.out_vector);
 }
 
-void npmmv_gpu_set_csr_matrix(struct CsrMatrixPtrs matrix_cpu, struct NpmmvCsrGpuAllocations gpu_allocations, uint outerdim, uint values) {
+void npmmv_gpu_set_csr_matrix(struct CsrMatrixPtrs matrix_cpu, struct NpmmvCsrGpuAllocations gpu_allocations, 
+                                uint outerdim, uint values) {
     npmmv_gpu_set_uint_array(matrix_cpu.cum_row_indexes, outerdim+1, gpu_allocations.mat_cum_row_indexes);
     npmmv_gpu_set_uint_array(matrix_cpu.column_indexes, values, gpu_allocations.mat_column_indexes);
     npmmv_gpu_set_float_array(matrix_cpu.values, values, gpu_allocations.mat_values);
 }
 
-void npmmv_csr_gpu_compute(struct NpmmvCsrGpuAllocations gpu_allocations, uint outerdim) {
-    internal_negative_prob_multiply_csr_matrix_vector_gpu(gpu_allocations.mat_cum_row_indexes.start, gpu_allocations.mat_column_indexes.start, 
-        gpu_allocations.mat_values.start, gpu_allocations.in_vector.start, gpu_allocations.out_vector.start, outerdim);
-    cudaDeviceSynchronize();
+void npmmv_csr_gpu_compute(struct NpmmvCsrGpuAllocations gpu_allocations, uint outerdim, uint computation_restriction_factor) {
+    //internal_negative_prob_multiply_csr_matrix_vector_gpu
+    internal_spmv_csr_veck_gpu(computation_restriction_factor,
+        gpu_allocations.mat_cum_row_indexes.start, 
+        gpu_allocations.mat_column_indexes.start, gpu_allocations.mat_values.start, 
+        gpu_allocations.in_vector.start, gpu_allocations.out_vector.start, outerdim);
+    gpuErrchk(cudaDeviceSynchronize());
 }
