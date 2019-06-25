@@ -15,30 +15,28 @@ __global__ void spmv_csr_vector_kernel(unsigned int computation_restriction_fact
     int lane = thread_id & (32 - 1); 
     // thread index within the warp
 
-    if (warp_id % computation_restriction_factor == 0) {
-        // one warp per row 
-        int row = warp_id / computation_restriction_factor;
-        if (row < outerdim) {
-            int row_start = cum_row_indexes[row]; 
-            int row_end = cum_row_indexes[row+1];
+    int row = warp_id / computation_restriction_factor;
+    if (row < outerdim) {
+        int row_start = cum_row_indexes[row]; 
+        int row_end = cum_row_indexes[row+1];
 
-            // compute running prod per thread 
-            vals[threadIdx.x] = 1; 
-            for (int i = row_start + lane; i < row_end; i += 32) {
-                vals[threadIdx.x] *= 1 - (matrix_data[i] * in_vector[column_indexes[i]]);
-            }
-
-            // parallel reduction in shared memory 
-            if (lane < 16) vals[threadIdx.x] *= vals[threadIdx.x + 16]; 
-            if (lane < 8) vals[threadIdx.x] *= vals[threadIdx.x + 8]; 
-            if (lane < 4) vals[threadIdx.x] *= vals[threadIdx.x + 4]; 
-            if (lane < 2) vals[threadIdx.x] *= vals[threadIdx.x + 2]; 
-            if (lane < 1) vals[threadIdx.x] *= vals[threadIdx.x + 1];
-
-            // first thread writes the result 
-            if (lane == 0) out_vector[row] = vals[threadIdx.x];
+        // compute running prod per thread 
+        vals[threadIdx.x] = 1; 
+        for (int i = row_start + lane; i < row_end; i += 32) {
+            vals[threadIdx.x] *= 1 - (matrix_data[i] * in_vector[column_indexes[i]]);
         }
+
+        // parallel reduction in shared memory 
+        if (lane < 16) vals[threadIdx.x] *= vals[threadIdx.x + 16]; 
+        if (lane < 8) vals[threadIdx.x] *= vals[threadIdx.x + 8]; 
+        if (lane < 4) vals[threadIdx.x] *= vals[threadIdx.x + 4]; 
+        if (lane < 2) vals[threadIdx.x] *= vals[threadIdx.x + 2]; 
+        if (lane < 1) vals[threadIdx.x] *= vals[threadIdx.x + 1];
+
+        // first thread writes the result 
+        if (lane == 0) out_vector[row] = vals[threadIdx.x];
     }
+    
 }
 
 // NOTE: out_vector must be initialized with identity element (1)
