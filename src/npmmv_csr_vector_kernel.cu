@@ -9,8 +9,6 @@ __global__ void spmv_csr_vector_kernel(unsigned int computation_restriction_fact
                                         const unsigned int outerdim) { 
     __shared__ float vals[32];
     int thread_id = blockDim.x * blockIdx.x + threadIdx.x;
-
-    thread_id = thread_id / computation_restriction_factor;
     // global thread index 
     int warp_id = thread_id / 32; 
     // global warp index 
