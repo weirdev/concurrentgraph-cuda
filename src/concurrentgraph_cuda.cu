@@ -5,10 +5,13 @@
 
 #include "dev_array.h"
 #include "assert.h"
+#include "gpu_types.h"
+
 #include "concurrentgraph_cuda.h"
 #include "npmmv_dense_kernel.h"
 #include "npmmv_csr_kernel.h"
 #include "npmmv_csr_vector_kernel.h"
+#include "bfs_csr_kernel.h"
 
 
 void negative_prob_multiply_dense_matrix_vector_cpu(int iters, float* matrix, float* in_vector, 
@@ -44,91 +47,6 @@ void negative_prob_multiply_dense_matrix_vector_gpu(int iters, float* matrix, fl
     cudaDeviceSynchronize();
 }
 
-struct GpuFloatArray allocate_gpu_float_array(uint array_size) {
-    float* start;
-    float* end;
-    cudaError_t result = cudaMalloc((void**)&start, array_size * sizeof(float));
-    if (result != cudaSuccess)
-    {
-        start = end = 0;
-        throw std::runtime_error("failed to allocate device memory");
-    }
-    end = start + array_size;
-    struct GpuFloatArray arraystruct = {start, end};
-    return arraystruct;
-}
-
-void free_gpu_float_array(struct GpuFloatArray array) {
-    if (array.start != 0)
-    {
-        cudaFree(array.start);
-    }
-}
-
-struct GpuUIntArray allocate_gpu_uint_array(uint array_size) {
-    uint* start;
-    uint* end;
-    cudaError_t result = cudaMalloc((void**)&start, array_size * sizeof(uint));
-    if (result != cudaSuccess)
-    {
-        start = end = 0;
-        throw std::runtime_error("failed to allocate device memory");
-    }
-    end = start + array_size;
-    struct GpuUIntArray arraystruct = {start, end};
-    return arraystruct;
-}
-
-void free_gpu_uint_array(struct GpuUIntArray array) {
-    if (array.start != 0)
-    {
-        cudaFree(array.start);
-    }
-}
-
-void npmmv_gpu_set_float_array(float* src, uint size, struct GpuFloatArray dst) {
-    if (dst.end - dst.start < size) {
-        throw std::out_of_range("Attempted to copy more memory than allocated on the device");
-    }
-    cudaError_t result = cudaMemcpy(dst.start, src, size * sizeof(float), cudaMemcpyHostToDevice);
-    if (result != cudaSuccess)
-    {
-        throw std::runtime_error("failed to copy to device memory");
-    }
-}
-
-void npmmv_gpu_get_float_array(struct GpuFloatArray src, float* dst, uint size) {
-    if (src.end - src.start < size) {
-        throw std::out_of_range("Attempted to copy more memory to host than allocated on the device");
-    }
-    
-    gpuErrchk(cudaMemcpy(dst, src.start, size * sizeof(float), cudaMemcpyDeviceToHost));
-    cudaDeviceSynchronize();
-}
-
-void npmmv_gpu_set_uint_array(uint* src, uint size, struct GpuUIntArray dst) {
-    if (dst.end - dst.start < size) {
-        throw std::out_of_range("Attempted to copy more memory than allocated on the device");
-    }
-    cudaError_t result = cudaMemcpy(dst.start, src, size * sizeof(uint), cudaMemcpyHostToDevice);
-    if (result != cudaSuccess)
-    {
-        throw std::runtime_error("failed to copy to device memory");
-    }
-}
-
-void npmmv_gpu_get_uint_array(struct GpuUIntArray src, uint* dst, uint size) {
-    if (src.end - src.start < size) {
-        throw std::out_of_range("Attempted to copy more memory to host than allocated on the device");
-    }
-    cudaError_t result = cudaMemcpy(dst, src.start, size * sizeof(uint), cudaMemcpyDeviceToHost);
-    if (result != cudaSuccess)
-    {
-        throw std::runtime_error("failed to copy to host memory");
-    }
-    cudaDeviceSynchronize();
-}
-
 
 struct NpmmvDenseGpuAllocations npmmv_dense_gpu_allocate(uint outerdim, uint innerdim) {
     struct GpuFloatArray matrix_mem = allocate_gpu_float_array(outerdim*innerdim);
@@ -146,7 +64,7 @@ void npmmv_dense_gpu_free(struct NpmmvDenseGpuAllocations gpu_allocations) {
 }
 
 void npmmv_gpu_set_dense_matrix(float* matrix_cpu, struct GpuFloatArray matrix_gpu, uint outerdim, uint innerdim) {
-    npmmv_gpu_set_float_array(matrix_cpu, outerdim*innerdim, matrix_gpu);
+    set_gpu_float_array(matrix_cpu, outerdim*innerdim, matrix_gpu);
 }
 
 void npmmv_dense_gpu_compute(struct NpmmvDenseGpuAllocations gpu_allocations, uint outerdim, uint innerdim) {
@@ -181,11 +99,11 @@ void npmmv_csr_gpu_free(struct NpmmvCsrGpuAllocations gpu_allocations) {
     free_gpu_float_array(gpu_allocations.out_vector);
 }
 
-void npmmv_gpu_set_csr_matrix(struct CsrMatrixPtrs matrix_cpu, struct NpmmvCsrGpuAllocations gpu_allocations, 
+void npmmv_gpu_set_csr_matrix(struct CsrFloatMatrixPtrs matrix_cpu, struct NpmmvCsrGpuAllocations gpu_allocations, 
                                 uint outerdim, uint values) {
-    npmmv_gpu_set_uint_array(matrix_cpu.cum_row_indexes, outerdim+1, gpu_allocations.mat_cum_row_indexes);
-    npmmv_gpu_set_uint_array(matrix_cpu.column_indexes, values, gpu_allocations.mat_column_indexes);
-    npmmv_gpu_set_float_array(matrix_cpu.values, values, gpu_allocations.mat_values);
+    set_gpu_uint_array(matrix_cpu.cum_row_indexes, outerdim+1, gpu_allocations.mat_cum_row_indexes);
+    set_gpu_uint_array(matrix_cpu.column_indexes, values, gpu_allocations.mat_column_indexes);
+    set_gpu_float_array(matrix_cpu.values, values, gpu_allocations.mat_values);
 }
 
 void npmmv_csr_gpu_compute(struct NpmmvCsrGpuAllocations gpu_allocations, uint outerdim, uint computation_restriction_factor) {
@@ -194,5 +112,39 @@ void npmmv_csr_gpu_compute(struct NpmmvCsrGpuAllocations gpu_allocations, uint o
         gpu_allocations.mat_cum_row_indexes.start, 
         gpu_allocations.mat_column_indexes.start, gpu_allocations.mat_values.start, 
         gpu_allocations.in_vector.start, gpu_allocations.out_vector.start, outerdim);
+    gpuErrchk(cudaDeviceSynchronize());
+}
+
+struct BfsCsrGpuAllocations bfs_csr_gpu_allocate(uint rows, uint values) {
+    struct GpuUIntArray mat_cum_row_indexes = allocate_gpu_uint_array(rows + 1);
+    struct GpuUIntArray mat_column_indexes = allocate_gpu_uint_array(values);
+    struct GpuIntArray mat_values = allocate_gpu_int_array(values);
+    struct GpuUIntArray in_infections = allocate_gpu_uint_array(rows);
+    struct GpuUIntArray out_infections = allocate_gpu_uint_array(rows);
+
+    struct BfsCsrGpuAllocations gpu_allocations = {mat_cum_row_indexes, mat_column_indexes, mat_values, 
+        in_infections, out_infections};
+    return gpu_allocations;
+}
+
+void bfs_csr_gpu_free(struct BfsCsrGpuAllocations gpu_allocations) {
+    free_gpu_uint_array(gpu_allocations.mat_cum_row_indexes);
+    free_gpu_uint_array(gpu_allocations.mat_column_indexes);
+    free_gpu_int_array(gpu_allocations.mat_values);
+    free_gpu_uint_array(gpu_allocations.in_infections);
+    free_gpu_uint_array(gpu_allocations.out_infections);
+}
+
+void bfs_gpu_set_csr_matrix(struct CsrIntMatrixPtrs matrix_cpu, struct BfsCsrGpuAllocations gpu_allocations, 
+                            uint rows, uint values) {
+    set_gpu_uint_array(matrix_cpu.cum_row_indexes, rows+1, gpu_allocations.mat_cum_row_indexes);
+    set_gpu_uint_array(matrix_cpu.column_indexes, values, gpu_allocations.mat_column_indexes);
+    set_gpu_int_array(matrix_cpu.values, values, gpu_allocations.mat_values);
+}
+
+void bfs_csr_gpu_compute(struct BfsCsrGpuAllocations gpu_allocations, uint rows) {
+    internal_breadth_first_search_csr_gpu(gpu_allocations.mat_cum_row_indexes.start, 
+        gpu_allocations.mat_column_indexes.start, gpu_allocations.mat_values.start,
+        gpu_allocations.in_infections.start, gpu_allocations.out_infections.start, rows);
     gpuErrchk(cudaDeviceSynchronize());
 }

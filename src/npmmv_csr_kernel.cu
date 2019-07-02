@@ -3,8 +3,9 @@
 #include "cuda_runtime.h"
 #include "npmmv_csr_kernel.h"
 
-__global__ void negative_prob_multiply_csr_matrix_vector_kernel(unsigned int* cum_row_indexes, unsigned int* column_indexes, 
-                                                float* matrix_data, float* in_vector, float* out_vector, unsigned int outerdim) {
+__global__ void negative_prob_multiply_csr_matrix_vector_kernel(unsigned int* cum_row_indexes, 
+                    unsigned int* column_indexes, float* matrix_data, float* in_vector, float* out_vector, 
+                    unsigned int outerdim) {
 
     unsigned int row = blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -21,8 +22,9 @@ __global__ void negative_prob_multiply_csr_matrix_vector_kernel(unsigned int* cu
     }
 }
 
-void internal_negative_prob_multiply_csr_matrix_vector_gpu(unsigned int* cum_row_indexes, unsigned int* column_indexes, 
-                                            float* matrix_data, float* in_vector, float* out_vector, unsigned int outerdim) {
+void internal_negative_prob_multiply_csr_matrix_vector_gpu(unsigned int* cum_row_indexes, 
+        unsigned int* column_indexes, float* matrix_data, float* in_vector, float* out_vector, 
+        unsigned int outerdim) {
     // declare the number of blocks per grid and the number of threads per block
     // use 1 to 512 threads per block
     dim3 threadsPerBlock(outerdim);
@@ -32,5 +34,6 @@ void internal_negative_prob_multiply_csr_matrix_vector_gpu(unsigned int* cum_row
         blocksPerGrid.x = ceil(double(outerdim)/double(threadsPerBlock.x));
     }
 
-    negative_prob_multiply_csr_matrix_vector_kernel<<<blocksPerGrid,threadsPerBlock>>>(cum_row_indexes, column_indexes, matrix_data, in_vector, out_vector, outerdim);
+    negative_prob_multiply_csr_matrix_vector_kernel<<<blocksPerGrid,threadsPerBlock>>>(cum_row_indexes, 
+        column_indexes, matrix_data, in_vector, out_vector, outerdim);
 }
