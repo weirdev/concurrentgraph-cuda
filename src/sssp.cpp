@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <cuda_runtime.h>
 #include "nvgraph.h"
+#include "sssp.h"
 
 /* Single Source Shortest Path (SSSP)
  *  Calculate the shortest path distance from a single vertex in the graph
