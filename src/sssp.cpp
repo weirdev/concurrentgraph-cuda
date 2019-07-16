@@ -28,8 +28,10 @@ void check_status(nvgraphStatus_t status)
     }
 }
 
-void sssp(int* cum_col_indexes, int* row_indexes, float* values, size_t nodes, size_t edges, float* output)
+void sssp(int* cum_col_indexes, int* row_indexes, float* values, unsigned int nodes_i, unsigned int edges_i, float* output)
 {
+    size_t nodes = (size_t)nodes_i;
+    size_t edges = (size_t)edges_i;
     // row_indexes = src indexes
     const size_t vertex_numsets = 1, edge_numsets = 1;
     float *sssp_1_h;

@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-    void sssp(int* cum_col_indexes, int* row_indexes, float* values, size_t nodes, size_t edges, float* output);
+    void sssp(int* cum_col_indexes, int* row_indexes, float* values, unsigned int nodes_i, unsigned int edges_i, float* output);
 
 #ifdef __cplusplus
 }
