@@ -35,7 +35,6 @@ void sssp(int* cum_col_indexes, int* row_indexes, float* values, unsigned int no
     size_t edges = (size_t)edges_i;
     // row_indexes = src indexes
     const size_t vertex_numsets = 1, edge_numsets = 1;
-    float *sssp_1_h;
     void** vertex_dim;
 
     // nvgraph variables
@@ -86,6 +85,8 @@ void sssp(int* cum_col_indexes, int* row_indexes, float* values, unsigned int no
     //Clean 
     check_status(nvgraphDestroyGraphDescr (handle, graph));
     check_status(nvgraphDestroy (handle));
+
+    printf("destroyed!\n");
 }
 
 int main(int argc, char **argv) {
