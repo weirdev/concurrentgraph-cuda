@@ -32,6 +32,7 @@ extern "C" {
     struct GpuIntArray allocate_gpu_int_array(uint array_size);
     void free_gpu_int_array(struct GpuIntArray array);
     void set_gpu_int_array(int* src, uint size, struct GpuIntArray dst);
+    void get_gpu_int_array(struct GpuIntArray src, int* dst, uint size);
 
     struct CsrFloatMatrixPtrs {
         uint* cum_row_indexes;

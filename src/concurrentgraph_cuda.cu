@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdexcept>
+#include <iostream>
 #include <cuda.h>
 #include <cuda_runtime.h>
 
@@ -12,6 +13,7 @@
 #include "npmmv_csr_kernel.h"
 #include "npmmv_csr_vector_kernel.h"
 #include "bfs_csr_kernel.h"
+#include "graph_determ_weights.h"
 
 
 void negative_prob_multiply_dense_matrix_vector_cpu(int iters, float* matrix, float* in_vector, 
@@ -80,6 +82,7 @@ void npmmv_dense_gpu_compute(struct NpmmvDenseGpuAllocations gpu_allocations, ui
 }
 
 struct NpmmvCsrGpuAllocations npmmv_csr_gpu_allocate(uint outerdim, uint innerdim, uint values) {
+    std::cout << "test prnt\n";
     struct GpuUIntArray mat_cum_row_indexes = allocate_gpu_uint_array(outerdim + 1);
     struct GpuUIntArray mat_column_indexes = allocate_gpu_uint_array(values);
     struct GpuFloatArray mat_values = allocate_gpu_float_array(values);
@@ -147,4 +150,42 @@ void bfs_csr_gpu_compute(struct BfsCsrGpuAllocations gpu_allocations, uint rows)
         gpu_allocations.mat_column_indexes.start, gpu_allocations.mat_values.start,
         gpu_allocations.in_infections.start, gpu_allocations.out_infections.start, rows);
     gpuErrchk(cudaDeviceSynchronize());
+}
+
+int* graph_deterministic_weights(struct CsrFloatMatrixPtrs contact_matrix_cpu, 
+        uint rows, uint values, float* immunities, float* shedding_curve, uint infection_length, 
+        float transmission_rate) {
+    printf("start\n");
+    struct GpuUIntArray contact_mat_cum_row_indexes = allocate_gpu_uint_array(rows + 1);
+    printf("mat alloc1\n");
+    set_gpu_uint_array(contact_matrix_cpu.cum_row_indexes, rows + 1, contact_mat_cum_row_indexes);
+    printf("mat alloc2\n");
+    struct GpuUIntArray contact_mat_column_indexes = allocate_gpu_uint_array(values);
+    printf("mat alloc3\n");
+    set_gpu_uint_array(contact_matrix_cpu.column_indexes, values, contact_mat_column_indexes);
+    printf("mat alloc4\n");
+    struct GpuFloatArray contact_mat_values = allocate_gpu_float_array(values);
+    printf("mat alloc5\n");
+    set_gpu_float_array(contact_matrix_cpu.values, values, contact_mat_values);
+    printf("mat alloc all\n");
+
+    struct GpuFloatArray immunities_gpu = allocate_gpu_float_array(rows);
+    set_gpu_float_array(immunities, rows, immunities_gpu);
+    printf("immun alloc\n");
+    struct GpuFloatArray shedding_curve_gpu = allocate_gpu_float_array(infection_length);
+    set_gpu_float_array(shedding_curve, infection_length, shedding_curve_gpu);
+    printf("shed alloc\n");
+
+    struct GpuIntArray infection_mat_values = allocate_gpu_int_array(values);
+    printf("inf alloc\n");
+    
+    printf("calc start\n");
+    internal_graph_determ_weights(contact_mat_cum_row_indexes.start, contact_mat_column_indexes.start, 
+        contact_mat_values.start, rows, values, immunities_gpu.start, shedding_curve_gpu.start, 
+        infection_length, transmission_rate, infection_mat_values.start);
+    gpuErrchk(cudaDeviceSynchronize());
+    printf("calc done\n");
+    int* csr_determ_weight_values = (int*)malloc(values * sizeof(int));
+    get_gpu_int_array(infection_mat_values, csr_determ_weight_values, values);
+    return csr_determ_weight_values;
 }

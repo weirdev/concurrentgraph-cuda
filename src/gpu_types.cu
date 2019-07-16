@@ -122,3 +122,15 @@ void set_gpu_int_array(int* src, uint size, struct GpuIntArray dst) {
         throw std::runtime_error("failed to copy to device memory");
     }
 }
+
+void get_gpu_int_array(struct GpuIntArray src, int* dst, uint size) {
+    if (src.end - src.start < size) {
+        throw std::out_of_range("Attempted to copy more memory to host than allocated on the device");
+    }
+    cudaError_t result = cudaMemcpy(dst, src.start, size * sizeof(int), cudaMemcpyDeviceToHost);
+    if (result != cudaSuccess)
+    {
+        throw std::runtime_error("failed to copy to host memory");
+    }
+    cudaDeviceSynchronize();
+}

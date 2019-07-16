@@ -44,6 +44,8 @@ extern "C" {
     void bfs_gpu_set_csr_matrix(struct CsrIntMatrixPtrs matrix_cpu, struct BfsCsrGpuAllocations gpu_allocations, uint rows, uint values);
     void bfs_csr_gpu_compute(struct BfsCsrGpuAllocations gpu_allocations, uint rows);
 
+    int* graph_deterministic_weights(struct CsrFloatMatrixPtrs matrix_cpu, uint rows, uint values, float* immunities, float* shedding_curve, uint infection_length, float transmission_rate);
+
 #ifdef __cplusplus
 }
 #endif
