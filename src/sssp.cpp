@@ -29,7 +29,7 @@ void check_status(nvgraphStatus_t status)
     }
 }
 
-int sssp(int* cum_col_indexes, int* row_indexes, float* values, size_t nodes, size_t edges, float* output)
+void sssp(int* cum_col_indexes, int* row_indexes, float* values, size_t nodes, size_t edges, float* output)
 {
     // row_indexes = src indexes
     const size_t vertex_numsets = 1, edge_numsets = 1;
@@ -80,8 +80,6 @@ int sssp(int* cum_col_indexes, int* row_indexes, float* values, size_t nodes, si
     //Clean 
     check_status(nvgraphDestroyGraphDescr (handle, graph));
     check_status(nvgraphDestroy (handle));
-
-    return 0;
 }
 
 int main(int argc, char **argv) {

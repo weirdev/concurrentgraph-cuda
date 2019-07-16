@@ -1,7 +1,7 @@
 // Compressed sparse row format
 // Rows transmit to columns
 #include <math.h>
-//#include <curand_kernel.h>
+#include <curand_kernel.h>
 #include "cuda_runtime.h"
 #include "graph_determ_weights.h"
 
@@ -12,16 +12,14 @@ __global__ void graph_determ_weights(unsigned int* contact_mat_cum_row_indexes, 
 
     unsigned int row = blockDim.x * blockIdx.x + threadIdx.x;
     
-    /*
     curandState state;
-    curand_init(1234 + row, 0, 0, &state);*/
+    curand_init(1234 + row, 0, 0, &state);
     if (row < rows) {
         for (int j=contact_mat_cum_row_indexes[row]; j<contact_mat_cum_row_indexes[row+1]; j++) {
             float pinf_noshed = contact_mat_values[j] * transmission_rate * (1.0 - immunities[contact_mat_column_indexes[j]]);
             int delay;
             for (delay=1; delay<infection_length+1; delay++) {
-                //curand_uniform_double(&state)
-                if (0.1 < pinf_noshed * shedding_curve[delay - 1]) {
+                if (curand_uniform_double(&state) < pinf_noshed * shedding_curve[delay - 1]) {
                     break;
                 }
             }
