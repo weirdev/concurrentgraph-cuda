@@ -155,29 +155,21 @@ void bfs_csr_gpu_compute(struct BfsCsrGpuAllocations gpu_allocations, uint rows)
 int* graph_deterministic_weights(struct CsrFloatMatrixPtrs contact_matrix_cpu, 
         uint rows, uint values, float* immunities, float* shedding_curve, uint infection_length, 
         float transmission_rate) {
-    printf("start\n");
+    printf("copy start\n");
     struct GpuUIntArray contact_mat_cum_row_indexes = allocate_gpu_uint_array(rows + 1);
-    printf("mat alloc1\n");
     set_gpu_uint_array(contact_matrix_cpu.cum_row_indexes, rows + 1, contact_mat_cum_row_indexes);
-    printf("mat alloc2\n");
     struct GpuUIntArray contact_mat_column_indexes = allocate_gpu_uint_array(values);
-    printf("mat alloc3\n");
     set_gpu_uint_array(contact_matrix_cpu.column_indexes, values, contact_mat_column_indexes);
-    printf("mat alloc4\n");
     struct GpuFloatArray contact_mat_values = allocate_gpu_float_array(values);
-    printf("mat alloc5\n");
     set_gpu_float_array(contact_matrix_cpu.values, values, contact_mat_values);
-    printf("mat alloc all\n");
 
     struct GpuFloatArray immunities_gpu = allocate_gpu_float_array(rows);
     set_gpu_float_array(immunities, rows, immunities_gpu);
-    printf("immun alloc\n");
     struct GpuFloatArray shedding_curve_gpu = allocate_gpu_float_array(infection_length);
     set_gpu_float_array(shedding_curve, infection_length, shedding_curve_gpu);
-    printf("shed alloc\n");
 
     struct GpuIntArray infection_mat_values = allocate_gpu_int_array(values);
-    printf("inf alloc\n");
+    printf("copying done\n");
     
     printf("calc start\n");
     internal_graph_determ_weights(contact_mat_cum_row_indexes.start, contact_mat_column_indexes.start, 
@@ -185,7 +177,10 @@ int* graph_deterministic_weights(struct CsrFloatMatrixPtrs contact_matrix_cpu,
         infection_length, transmission_rate, infection_mat_values.start);
     gpuErrchk(cudaDeviceSynchronize());
     printf("calc done\n");
+
+    printf("copy start\n");
     int* csr_determ_weight_values = (int*)malloc(values * sizeof(int));
     get_gpu_int_array(infection_mat_values, csr_determ_weight_values, values);
+    printf("copying done\n");
     return csr_determ_weight_values;
 }
