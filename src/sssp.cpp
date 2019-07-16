@@ -70,8 +70,12 @@ void sssp(int* cum_col_indexes, int* row_indexes, float* values, unsigned int no
     check_status(nvgraphSetEdgeData(handle, graph, (void*)values, 0));
 
     // Solve
+    
+    printf("precomp!\n");
     int source_vert = 0;
     check_status(nvgraphSssp(handle, graph, 0,  &source_vert, 0));
+    
+    printf("comp done!\n");
 
     check_status(nvgraphGetVertexData(handle, graph, (void*)output, 0));
 
